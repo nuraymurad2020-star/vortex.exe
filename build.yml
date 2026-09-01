@@ -1,0 +1,42 @@
+name: Vortex .exe qur
+
+# Bu fayl GitHub-un pulsuz Windows serverində (siz heç nə qurmadan)
+# Vortex.exe faylını avtomatik tərtib edir. Kod repoya yüklənən (push edilən)
+# kimi işə düşür, nəticəni "Artifacts" bölməsindən yükləyə bilərsiniz.
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Kodu götür
+        uses: actions/checkout@v4
+
+      - name: .NET 8 SDK qur
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: NuGet paketlərini bərpa et
+        run: dotnet restore client/Vortex/Vortex.csproj
+
+      - name: Vortex.exe-ni tərtib et (tək fayl, win-x64)
+        run: >
+          dotnet publish client/Vortex/Vortex.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -o publish_output
+
+      - name: Nəticəni Artifact kimi yüklə
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vortex-exe
+          path: publish_output/Vortex.exe
